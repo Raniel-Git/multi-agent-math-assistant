@@ -1,6 +1,10 @@
 import pytest
 
 from utils.math_parser import MathParser
+from utils.parser_exceptions import (
+    InvalidMathExpressionError,
+    UnsupportedMathRequestError,
+)
 
 
 def test_parse_addition_operation() -> None:
@@ -81,21 +85,21 @@ def test_parse_follow_up_portuguese_multiplication_operation() -> None:
     }
 
 
-def test_parse_follow_up_without_last_result_raises_value_error() -> None:
+def test_parse_follow_up_without_last_result_raises_invalid_expression() -> None:
     parser = MathParser()
 
     with pytest.raises(
-        ValueError,
-        match="No supported mathematical operation was found.",
+        InvalidMathExpressionError,
+        match="Invalid mathematical expression.",
     ):
         parser.parse("subtract 2")
 
 
-def test_parse_invalid_message_raises_value_error() -> None:
+def test_parse_invalid_message_raises_unsupported_request() -> None:
     parser = MathParser()
 
     with pytest.raises(
-        ValueError,
+        UnsupportedMathRequestError,
         match="No supported mathematical operation was found.",
     ):
         parser.parse("Who is Neymar?")

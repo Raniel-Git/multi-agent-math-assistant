@@ -42,7 +42,6 @@ class ChatbotOrchestrator:
         operation: str,
         first_number: float,
         second_number: float,
-        user_message: str,
         user_language: str = "en",
     ) -> dict[str, Any]:
         """
@@ -52,17 +51,11 @@ class ChatbotOrchestrator:
             operation (str): Mathematical operation name.
             first_number (float): First operand.
             second_number (float): Second operand.
-            user_message (str): Original user message.
             user_language (str): User language code.
 
         Returns:
             dict[str, Any]: Structured orchestration result.
         """
-        self.memory.add_message(
-            role="user",
-            content=user_message,
-        )
-
         math_result = self.mathematical_agent.execute(
             operation=operation,
             first_number=first_number,

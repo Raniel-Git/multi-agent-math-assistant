@@ -17,3 +17,5 @@ htmlcov/
 *.pyd
 
 .DS_Store
+
+.env

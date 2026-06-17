@@ -16,7 +16,6 @@ def test_orchestrator_handles_math_request() -> None:
         operation="add",
         first_number=5,
         second_number=4,
-        user_message="5 + 4",
         user_language="en",
     )
 
@@ -29,10 +28,6 @@ def test_orchestrator_handles_math_request() -> None:
     assert result["final_response"] == "The result is 9."
     assert result["last_result"] == 9
     assert result["messages"] == [
-        {
-            "role": "user",
-            "content": "5 + 4",
-        },
         {
             "role": "assistant",
             "content": "The result is 9.",
@@ -52,7 +47,6 @@ def test_orchestrator_handles_portuguese_response() -> None:
         operation="subtract",
         first_number=9,
         second_number=2,
-        user_message="subtrair 2",
         user_language="pt",
     )
 
