@@ -1,294 +1,215 @@
-# Multi-Agent Chatbot
+# 🤖 Multi-Agent Math Assistant
 
-## Overview
-
-This project is a simple multi-agent chatbot application built with Streamlit.
-
-The purpose of the project is to demonstrate the fundamental concepts used in modern AI agent systems, including:
-
-* Agent orchestration
-* Tool usage
-* Memory management
-* Context awareness
-* Prompt engineering
-* Guardrails
-
-The chatbot performs mathematical operations through specialized agents and dedicated tools while maintaining conversational context across multiple interactions.
+A multi-agent chatbot built with **Python**, **Streamlit**, **OpenAI**, and **Ollama**, capable of solving mathematical operations, understanding natural language, maintaining contextual memory, and handling conversational requests through specialized agents.
 
 ---
 
-## Architecture
+## 🚀 Features
 
-The application follows a modular architecture where each component has a clear responsibility.
+### 🧠 Multi-Agent Architecture
 
-```text
-User
- │
- ▼
-Streamlit Interface
- │
- ▼
-Math Parser
- │
- ▼
-Orchestrator
- ├─────────────► Mathematical Agent
- │                     │
- │                     ▼
- │                 Math Tools
- │
- ▼
-Writer Agent
- │
- ▼
-Memory
- │
- ▼
-Response
-```
+The application is composed of specialized agents:
+
+* **Intent Agent**
+
+  * Interprets user intent.
+  * Detects mathematical operations.
+  * Handles contextual references.
+
+* **Mathematical Agent**
+
+  * Executes validated mathematical operations.
+  * Uses deterministic tools instead of LLM calculations.
+
+* **Writer Agent**
+
+  * Generates friendly responses.
+  * Supports multiple languages.
+
+* **Conversation Agent**
+
+  * Handles natural conversation.
+  * Provides explanations and guidance when mathematical operations are not detected.
 
 ---
 
-## Project Structure
+### 🧮 Mathematical Capabilities
 
-```text
-multi-agent-chatbot/
-├── app.py
-├── agents/
-│   ├── mathematical_agent.py
-│   └── writer_agent.py
-├── tools/
-│   └── math_tools.py
-├── orchestration/
-│   └── orchestrator.py
-├── memory/
-│   └── session_memory.py
-├── prompts/
-│   ├── mathematical_prompt.py
-│   └── writer_prompt.py
-├── utils/
-│   ├── language_detector.py
-│   └── math_parser.py
-├── tests/
-└── requirements.txt
-```
-
----
-
-## Agent Responsibilities
-
-### Mathematical Agent
-
-Responsible for:
-
-* Executing calculations
-* Using tools as the source of truth
-* Avoiding direct mathematical reasoning
-* Returning structured results
-
-Supported operations:
+Supports:
 
 * Addition
 * Subtraction
 * Multiplication
 * Division
+* Parenthesized expressions
+* Power operations
+* Square roots
+* Trigonometric functions
+* Logarithmic functions
+* Mathematical constants (`π`, `e`)
+* Context-aware follow-up calculations
 
----
+Examples:
 
-### Writer Agent
+```text
+5 + 4
 
-Responsible for:
+(5 + 4) * 3
 
-* Generating user-friendly responses
-* Formatting outputs
-* Adapting responses to the user's language
-* Improving readability
+sqrt(81)
 
----
+raiz quadrada de 144
 
-## Tool Architecture
+2 elevado a 10
 
-The project uses dedicated mathematical tools.
+sin(pi / 2)
+```
 
-Available tools:
+### 💬 Contextual Memory
 
-* add()
-* subtract()
-* multiply()
-* divide()
-
-All calculations are performed through tools instead of direct agent reasoning.
-
-This ensures deterministic and reliable mathematical results.
-
----
-
-## Memory Implementation
-
-Conversation memory is implemented through SessionMemory.
-
-Responsibilities:
-
-* Store user messages
-* Store assistant messages
-* Store the latest mathematical result
-* Provide context for follow-up requests
+The assistant remembers previous results.
 
 Example:
 
-User:
-
 ```text
-5 + 4
-```
+User:
+5 + 5
 
 Assistant:
-
-```text
-9
-```
+10
 
 User:
-
-```text
-subtract 2
-```
+Now multiply that by 3
 
 Assistant:
-
-```text
-7
+30
 ```
 
-The second operation uses the previous result stored in memory.
-
----
-
-## Context Awareness
-
-The chatbot supports follow-up requests.
-
-Examples:
-
-```text
-5 + 4
-subtract 2
-multiply by 3
-divide by 7
-```
-
-The system automatically uses previous results when required.
-
----
-
-## Language Detection
-
-The application detects the user's language.
+### 🌎 Multi-Language Support
 
 Supported languages:
 
-* English
-* Portuguese
+* Portuguese 🇧🇷
+* English 🇺🇸
+* Spanish 🇪🇸
 
-Examples:
+---
 
-English:
+## 🛡️ Safety Features
 
-```text
-subtract 2
-```
+* Division by zero protection
+* Expression validation
+* Safe AST-based evaluation
+* Invalid mathematical input handling
+* Context validation
+* Prompt injection filtering
 
-Response:
+---
 
-```text
-The result is 7.
-```
-
-Portuguese:
-
-```text
-subtrair 2
-```
-
-Response:
+## 🏗️ Architecture
 
 ```text
-O resultado é 7.
+User
+  │
+  ▼
+Intent Agent
+  │
+  ▼
+Expression Tool
+  │
+  ▼
+Mathematical Agent
+  │
+  ▼
+Writer Agent
+  │
+  ▼
+Session Memory
 ```
 
 ---
 
-## Guardrails
+## 🧰 Technologies
 
-Basic guardrails were implemented.
+* Python 3.10+
+* Streamlit
+* OpenAI API
+* Ollama
+* AST Expression Evaluation
+* Pytest
+* Dotenv
 
-Examples:
+---
 
-Division by zero:
-
-```text
-10 / 0
-```
-
-Response:
-
-```text
-Division by zero is not allowed.
-```
-
-Unsupported requests:
+## 📂 Project Structure
 
 ```text
-Who is Neymar?
-```
+multi-agent-math-assistant/
 
-Response:
-
-```text
-No supported mathematical operation was found.
+├── agents/
+│   ├── conversation_agent.py
+│   ├── intent_agent.py
+│   ├── mathematical_agent.py
+│   └── writer_agent.py
+│
+├── clients/
+│   ├── openai_client.py
+│   └── ollama_client.py
+│
+├── memory/
+│   └── session_memory.py
+│
+├── tools/
+│   ├── expression_tools.py
+│   └── text_tools.py
+│
+├── utils/
+│   ├── language_detector.py
+│   ├── math_parser.py
+│   ├── math_validator.py
+│   └── parser_exceptions.py
+│
+├── tests/
+│
+├── app.py
+├── requirements.txt
+└── README.md
 ```
 
 ---
 
-## Testing
+## ⚙️ Installation
 
-The project includes automated tests covering:
+Clone the repository:
 
-* Mathematical tools
-* Mathematical agent
-* Writer agent
-* Memory
-* Parser
-* Orchestrator
-* Language detector
-* Prompts
+```bash
+git clone https://github.com/Raniel-Git/multi-agent-math-assistant.git
+```
 
-Coverage results:
+Enter the project:
 
-* Business modules: 98%
-* All tests passing
+```bash
+cd multi-agent-math-assistant
+```
 
----
+Create a virtual environment:
 
-## Framework Choice
+```bash
+python -m venv venv
+```
 
-### Streamlit
+Activate:
 
-Chosen because:
-
-* Fast development
-* Simple user interface
-* Easy local execution
-* Excellent for prototypes and demonstrations
-
----
-
-## How to Run
-
-Activate the virtual environment:
+Linux:
 
 ```bash
 source venv/bin/activate
+```
+
+Windows:
+
+```bash
+venv\Scripts\activate
 ```
 
 Install dependencies:
@@ -297,7 +218,14 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-Run the application:
+Create a `.env` file:
+
+```env
+OPENAI_API_KEY=your_api_key_here
+LLM_PROVIDER=openai
+```
+
+Run:
 
 ```bash
 streamlit run app.py
@@ -305,18 +233,24 @@ streamlit run app.py
 
 ---
 
-## Learning Objectives
+## 📈 Future Improvements
 
-This project was created to provide practical experience with:
+* Image support
+* Voice support
+* Advanced symbolic mathematics
+* Graph plotting
+* Persistent memory
+* RAG integration
+* Multi-tool orchestration
 
-* AI agents
-* Tool calling
-* Agent collaboration
-* Memory
-* Context management
-* Prompt engineering
-* Guardrails
-* Software architecture
-* Automated testing
+---
 
-These concepts serve as the foundation for future AI projects and more advanced agent-based systems.
+## 👨‍💻 Developer
+
+**Raniel Andrade**
+
+LinkedIn:
+https://www.linkedin.com/in/raniel-andrade-25a9ba2bb
+
+GitHub:
+https://github.com/Raniel-Git
