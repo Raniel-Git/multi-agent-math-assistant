@@ -62,3 +62,9 @@ class SessionMemory:
             float | None: Last mathematical result.
         """
         return self.last_result
+    def clear(self) -> None:
+        """
+        Clears all messages and contextual data stored in memory.
+        """
+        self.messages.clear()
+        self.last_result = None

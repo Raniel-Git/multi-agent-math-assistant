@@ -1,6 +1,6 @@
 from typing import Any
 
-from clients.ollama_client import OllamaClient
+from clients.llm_client import LLMClient
 from utils.language_detector import LanguageDetector
 from utils.math_parser import MathParser
 from utils.parser_exceptions import (
@@ -40,15 +40,15 @@ class IntentAgent:
 
     def __init__(
         self,
-        ollama_client: OllamaClient,
+        llm_client: LLMClient,
     ) -> None:
         """
         Initializes the intent agent.
 
         Args:
-            ollama_client (OllamaClient): Ollama client dependency.
+            llm_client: Language model client dependency.
         """
-        self.ollama_client = ollama_client
+        self.llm_client = llm_client
         self.language_detector = LanguageDetector()
         self.math_parser = MathParser()
 
@@ -72,7 +72,7 @@ class IntentAgent:
             last_result=last_result,
         )
 
-        result = self.ollama_client.generate_json(
+        result = self.llm_client.generate_json(
             prompt=prompt,
         )
 

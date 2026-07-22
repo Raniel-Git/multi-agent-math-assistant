@@ -30,3 +30,16 @@ def test_initial_memory_is_empty() -> None:
 
     assert memory.get_messages() == []
     assert memory.get_last_result() is None
+
+def test_clear_removes_all_session_data() -> None:
+    memory = SessionMemory()
+    memory.add_message(
+        role="user",
+        content="5 + 5",
+    )
+    memory.set_last_result(10.0)
+
+    memory.clear()
+
+    assert memory.get_messages() == []
+    assert memory.get_last_result() is None

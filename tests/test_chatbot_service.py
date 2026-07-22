@@ -1,15 +1,21 @@
 from typing import Any
 
+from config.settings import Settings
+from factories.chatbot_factory import ChatbotFactory
 from services.chatbot_service import ChatbotService
 
 
 class FakeLLMClient:
-    """Provides deterministic responses for chatbot service tests."""
-
-    def generate_text(self, prompt: str) -> str:
+    def generate_text(
+        self,
+        prompt: str,
+    ) -> str:
         return "Resposta simulada."
 
-    def generate_json(self, prompt: str) -> dict[str, Any]:
+    def generate_json(
+        self,
+        prompt: str,
+    ) -> dict[str, Any]:
         return {
             "intent": "unclear",
             "operation": None,
@@ -20,7 +26,13 @@ class FakeLLMClient:
 
 
 def build_chatbot_service() -> ChatbotService:
-    return ChatbotService(
+    factory = ChatbotFactory(
+        settings=Settings(
+            llm_provider="ollama",
+        ),
+    )
+
+    return factory.create_service(
         llm_client=FakeLLMClient(),
     )
 
