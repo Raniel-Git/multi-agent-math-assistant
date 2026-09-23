@@ -117,10 +117,7 @@ class ChatbotWorkflow:
         except ValueError as error:
             error_message = str(error)
 
-            if (
-                "Division by zero" in error_message
-                or "zero" in error_message
-            ):
+            if "Division by zero" in error_message or "zero" in error_message:
                 response = self._build_division_by_zero_response(
                     user_language=user_language,
                 )
@@ -242,6 +239,7 @@ class ChatbotWorkflow:
                 intent=intent,
                 user_language=user_language,
                 text_math_context=text_math_context,
+                conversation_history=list(self.memory.get_messages()),
             )
         except ValueError:
             response = self._build_fallback_response(
@@ -302,9 +300,7 @@ class ChatbotWorkflow:
     ) -> str:
         if user_language == "pt":
             responses = {
-                "empty": (
-                    "Digite uma operação matemática para começarmos."
-                ),
+                "empty": ("Digite uma operação matemática para começarmos."),
                 "greeting": (
                     "Olá! Eu posso ajudar com operações matemáticas "
                     "básicas. Tente algo como: 5 + 4."
@@ -335,9 +331,7 @@ class ChatbotWorkflow:
 
         if user_language == "es":
             responses = {
-                "empty": (
-                    "Escribe una operación matemática para empezar."
-                ),
+                "empty": ("Escribe una operación matemática para empezar."),
                 "greeting": (
                     "¡Hola! Puedo ayudar con operaciones matemáticas "
                     "básicas. Prueba algo como: 5 + 4."
@@ -402,10 +396,7 @@ class ChatbotWorkflow:
     ) -> str:
         error_message = str(error)
 
-        if (
-            "Division by zero" in error_message
-            or "zero" in error_message
-        ):
+        if "Division by zero" in error_message or "zero" in error_message:
             return self._build_division_by_zero_response(
                 user_language=user_language,
             )
@@ -480,8 +471,7 @@ class ChatbotWorkflow:
         ]
 
         return any(
-            re.search(pattern, normalized_message)
-            for pattern in direct_patterns
+            re.search(pattern, normalized_message) for pattern in direct_patterns
         )
 
     def _format_number(

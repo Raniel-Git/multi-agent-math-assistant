@@ -63,9 +63,7 @@ def test_process_message_uses_expression_result(
     chatbot_workflow: ChatbotWorkflow,
     workflow_dependencies: dict[str, Any],
 ) -> None:
-    workflow_dependencies[
-        "expression_tool"
-    ].extract_expression.return_value = "5 + 5"
+    workflow_dependencies["expression_tool"].extract_expression.return_value = "5 + 5"
     workflow_dependencies["expression_tool"].evaluate.return_value = 10.0
 
     response = chatbot_workflow.process_message("5 + 5")
@@ -89,9 +87,7 @@ def test_process_message_uses_spanish_expression_response(
     workflow_dependencies: dict[str, Any],
 ) -> None:
     workflow_dependencies["language_detector"].detect.return_value = "es"
-    workflow_dependencies[
-        "expression_tool"
-    ].extract_expression.return_value = "5 + 5"
+    workflow_dependencies["expression_tool"].extract_expression.return_value = "5 + 5"
     workflow_dependencies["expression_tool"].evaluate.return_value = 10.0
 
     response = chatbot_workflow.process_message("5 + 5")
@@ -103,9 +99,7 @@ def test_process_message_handles_expression_division_by_zero(
     chatbot_workflow: ChatbotWorkflow,
     workflow_dependencies: dict[str, Any],
 ) -> None:
-    workflow_dependencies[
-        "expression_tool"
-    ].extract_expression.return_value = "10 / 0"
+    workflow_dependencies["expression_tool"].extract_expression.return_value = "10 / 0"
     workflow_dependencies["expression_tool"].evaluate.side_effect = ValueError(
         "Division by zero"
     )
@@ -113,8 +107,7 @@ def test_process_message_handles_expression_division_by_zero(
     response = chatbot_workflow.process_message("calculate 10 / zero")
 
     assert response == (
-        "Division by zero is not allowed. "
-        "That operation is mathematically invalid."
+        "Division by zero is not allowed. " "That operation is mathematically invalid."
     )
 
 
@@ -128,18 +121,14 @@ def test_process_message_uses_local_parser(
         "first_number": 5.0,
         "second_number": 5.0,
     }
-    workflow_dependencies[
-        "orchestrator"
-    ].handle_math_request.return_value = {
+    workflow_dependencies["orchestrator"].handle_math_request.return_value = {
         "final_response": "The result is 10.",
     }
 
     response = chatbot_workflow.process_message("five plus five")
 
     assert response == "The result is 10."
-    workflow_dependencies[
-        "orchestrator"
-    ].handle_math_request.assert_called_once_with(
+    workflow_dependencies["orchestrator"].handle_math_request.assert_called_once_with(
         operation="add",
         first_number=5.0,
         second_number=5.0,
@@ -158,9 +147,7 @@ def test_process_message_uses_valid_intent_result(
         "second_number": 3.0,
         "language": "en",
     }
-    workflow_dependencies[
-        "orchestrator"
-    ].handle_math_request.return_value = {
+    workflow_dependencies["orchestrator"].handle_math_request.return_value = {
         "final_response": "The result is 12.",
     }
 
@@ -171,24 +158,54 @@ def test_process_message_uses_valid_intent_result(
     assert response == "The result is 12."
 
 
-def test_process_message_uses_conversation_for_non_math_intent(
+def test_process_message_passes_history_to_conversation_agent(
     chatbot_workflow: ChatbotWorkflow,
     workflow_dependencies: dict[str, Any],
 ) -> None:
+    memory = workflow_dependencies["memory"]
+    conversation_agent = workflow_dependencies["conversation_agent"]
+
+    memory.add_message(
+        role="user",
+        content="My name is Raniel",
+    )
+    memory.add_message(
+        role="assistant",
+        content="Hello, Raniel!",
+    )
+
     workflow_dependencies["intent_agent"].interpret.return_value = {
-        "intent": "greeting",
+        "intent": "out_of_scope",
         "operation": None,
         "first_number": None,
         "second_number": None,
         "language": "en",
     }
-    workflow_dependencies[
-        "conversation_agent"
-    ].execute.return_value = "Hello! How can I help?"
+    conversation_agent.execute.return_value = "Your name is Raniel."
 
-    response = chatbot_workflow.process_message("Hello")
+    response = chatbot_workflow.process_message("What is my name?")
 
-    assert response == "Hello! How can I help?"
+    assert response == "Your name is Raniel."
+    conversation_agent.execute.assert_called_once_with(
+        user_message="What is my name?",
+        intent="out_of_scope",
+        user_language="en",
+        text_math_context=None,
+        conversation_history=[
+            {
+                "role": "user",
+                "content": "My name is Raniel",
+            },
+            {
+                "role": "assistant",
+                "content": "Hello, Raniel!",
+            },
+            {
+                "role": "user",
+                "content": "What is my name?",
+            },
+        ],
+    )
 
 
 def test_process_message_uses_conversation_for_incomplete_math_intent(
@@ -202,16 +219,14 @@ def test_process_message_uses_conversation_for_incomplete_math_intent(
         "second_number": None,
         "language": "en",
     }
-    workflow_dependencies[
-        "conversation_agent"
-    ].execute.return_value = "Invalid operation."
+    workflow_dependencies["conversation_agent"].execute.return_value = (
+        "Invalid operation."
+    )
 
     response = chatbot_workflow.process_message("Add five")
 
     assert response == "Invalid operation."
-    workflow_dependencies[
-        "conversation_agent"
-    ].execute.assert_called_once()
+    workflow_dependencies["conversation_agent"].execute.assert_called_once()
 
 
 def test_process_message_handles_intent_client_failure(
@@ -221,9 +236,9 @@ def test_process_message_handles_intent_client_failure(
     workflow_dependencies["intent_agent"].interpret.side_effect = ValueError(
         "Client unavailable"
     )
-    workflow_dependencies[
-        "conversation_agent"
-    ].execute.return_value = "I could not understand."
+    workflow_dependencies["conversation_agent"].execute.return_value = (
+        "I could not understand."
+    )
 
     response = chatbot_workflow.process_message("Unknown request")
 
@@ -241,8 +256,8 @@ def test_process_message_uses_fallback_when_conversation_fails(
         "second_number": None,
         "language": "en",
     }
-    workflow_dependencies["conversation_agent"].execute.side_effect = (
-        ValueError("Client unavailable")
+    workflow_dependencies["conversation_agent"].execute.side_effect = ValueError(
+        "Client unavailable"
     )
 
     response = chatbot_workflow.process_message("Hello")
@@ -292,9 +307,7 @@ def test_process_message_handles_domain_errors(
     error: Exception,
     expected_response: str,
 ) -> None:
-    workflow_dependencies[
-        "expression_tool"
-    ].extract_expression.side_effect = error
+    workflow_dependencies["expression_tool"].extract_expression.side_effect = error
 
     response = chatbot_workflow.process_message("Invalid request")
 
