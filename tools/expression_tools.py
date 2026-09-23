@@ -250,13 +250,13 @@ class ExpressionTool:
             normalized,
         )
         normalized = "".join(
-            char for char in normalized
+            char
+            for char in normalized
             if not unicodedata.combining(char)
         )
         normalized = normalized.replace(",", ".")
         normalized = normalized.replace("?", " ")
         normalized = normalized.replace("=", " ")
-        normalized = normalized.replace("-", " ")
 
         return normalized
 

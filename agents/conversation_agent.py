@@ -1,5 +1,7 @@
 from typing import Any
 
+from clients.llm_client import LLMClient
+
 
 class ConversationAgent:
     """
@@ -9,13 +11,13 @@ class ConversationAgent:
 
     def __init__(
         self,
-        llm_client: Any | None = None,
+        llm_client: LLMClient | None = None,
     ) -> None:
         """
         Initializes the conversation agent.
 
         Args:
-            llm_client (Any | None): LLM client used for text generation.
+            llm_client: LLM client used for text generation.
         """
         self.llm_client = llm_client
 

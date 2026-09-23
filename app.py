@@ -505,7 +505,7 @@ if "intent_detector" not in st.session_state:
 
 if "intent_agent" not in st.session_state:
     st.session_state.intent_agent = IntentAgent(
-        ollama_client=st.session_state.llm_client,
+        llm_client=st.session_state.llm_client,
     )
 
 if not st.session_state.memory.get_messages():
