@@ -4,20 +4,20 @@ from clients.llm_client import LLMClient
 
 
 class ConversationAgent:
-    """
-    Agent responsible for generating natural conversational responses
-    when the message is not a direct mathematical operation.
+    """Generate natural conversational responses for non-math messages.
+
+    Attributes:
+        llm_client: Client responsible for text generation.
     """
 
     def __init__(
         self,
         llm_client: LLMClient | None = None,
     ) -> None:
-        """
-        Initializes the conversation agent.
+        """Initialize the conversation agent.
 
         Args:
-            llm_client: LLM client used for text generation.
+            llm_client: Client used to generate conversational responses.
         """
         self.llm_client = llm_client
 
@@ -27,19 +27,21 @@ class ConversationAgent:
         intent: str,
         user_language: str,
         text_math_context: dict[str, Any] | None = None,
+        conversation_history: list[dict[str, Any]] | None = None,
     ) -> str:
-        """
-        Generates a conversational response.
+        """Generate a conversational response for the user message.
 
         Args:
-            user_message (str): Original user message.
-            intent (str): Detected intent.
-            user_language (str): User language.
-            text_math_context (dict[str, Any] | None): Optional context
-                when user mixes math with text.
+            user_message: Original user message.
+            intent: Intent detected for the current message.
+            user_language: Language detected for the user message.
+            text_math_context: Optional context for messages mixing text
+                and mathematical expressions.
+            conversation_history: Recent messages stored in the current
+                conversation session.
 
         Returns:
-            str: Natural response.
+            Natural conversational response.
         """
         if self.llm_client is None:
             return self._build_default_response(
@@ -53,6 +55,7 @@ class ConversationAgent:
             intent=intent,
             user_language=user_language,
             text_math_context=text_math_context,
+            conversation_history=conversation_history,
         )
 
         try:
@@ -72,19 +75,30 @@ class ConversationAgent:
         intent: str,
         user_language: str,
         text_math_context: dict[str, Any] | None,
+        conversation_history: list[dict[str, Any]] | None,
     ) -> str:
+        recent_history = self._get_recent_history(
+            conversation_history=conversation_history,
+        )
+
         if user_language == "pt":
             return f"""
 Você é um assistente conversacional de um chatbot matemático.
 
 Responda em português do Brasil.
 Seja natural, útil e curto.
+Use o histórico recente para manter o contexto da conversa.
+Use apenas informações pessoais explicitamente presentes no histórico.
+Nunca invente informações sobre o usuário.
 Não invente cálculos.
 Se houver uma possível interpretação usando texto, explique com clareza.
 Não responda assuntos fora do escopo como se fosse um assistente geral.
 O escopo principal é matemática básica.
 
-Mensagem do usuário:
+Histórico recente da conversa:
+{recent_history}
+
+Mensagem atual do usuário:
 {user_message}
 
 Intenção detectada:
@@ -94,11 +108,19 @@ Contexto de texto misturado com matemática:
 {text_math_context}
 
 Regras:
-- Se a mensagem mistura número com palavra, explique que não é uma operação matemática direta.
-- Se houver text_math_context, diga que uma possível interpretação é usar a quantidade de letras da palavra.
-- Se houver possible_result, mostre a conta possível, mas deixe claro que é uma interpretação.
+- Use o histórico recente quando a mensagem atual depender de contexto.
+- Se o usuário perguntar algo que informou anteriormente, responda usando
+  apenas informações presentes no histórico.
+- Se a informação solicitada não estiver no histórico, não a invente.
+- Se a mensagem mistura número com palavra, explique que não é uma
+  operação matemática direta.
+- Se houver text_math_context, diga que uma possível interpretação é usar
+  a quantidade de letras da palavra.
+- Se houver possible_result, mostre a conta possível, mas deixe claro que
+  é uma interpretação.
 - Se for saudação, cumprimente e dê exemplos.
-- Se for fora do escopo, explique educadamente o limite do chatbot.
+- Se for fora do escopo e não depender do histórico, explique
+  educadamente o limite do chatbot.
 - Use no máximo 4 frases.
 
 Gere apenas a resposta final.
@@ -109,12 +131,18 @@ You are a conversational assistant for a math chatbot.
 
 Answer in English.
 Be natural, helpful and short.
+Use the recent conversation history to maintain context.
+Use only personal information explicitly present in the history.
+Never invent information about the user.
 Do not invent calculations.
 If there is a possible interpretation involving text, explain it clearly.
 Do not answer out-of-scope topics as a general assistant.
 The main scope is basic math.
 
-User message:
+Recent conversation history:
+{recent_history}
+
+Current user message:
 {user_message}
 
 Detected intent:
@@ -124,15 +152,33 @@ Text mixed with math context:
 {text_math_context}
 
 Rules:
-- If the message mixes a number with a word, explain that it is not a direct math operation.
-- If text_math_context exists, say one possible interpretation is using the number of letters in the word.
-- If possible_result exists, show the possible calculation, but make it clear it is an interpretation.
+- Use the recent history when the current message depends on context.
+- If the user asks about something previously provided, answer using only
+  information present in the history.
+- If the requested information is not present in the history, do not
+  invent it.
+- If the message mixes a number with a word, explain that it is not a
+  direct mathematical operation.
+- If text_math_context exists, say one possible interpretation is using
+  the number of letters in the word.
+- If possible_result exists, show the possible calculation, but make it
+  clear that it is an interpretation.
 - If it is a greeting, greet and provide examples.
-- If it is out of scope, politely explain the chatbot limitation.
+- If it is out of scope and does not depend on conversation history,
+  politely explain the chatbot limitation.
 - Use at most 4 sentences.
 
 Generate only the final response.
 """
+
+    def _get_recent_history(
+        self,
+        conversation_history: list[dict[str, Any]] | None,
+    ) -> list[dict[str, Any]]:
+        if conversation_history is None:
+            return []
+
+        return conversation_history[-10:]
 
     def _build_default_response(
         self,
@@ -142,13 +188,9 @@ Generate only the final response.
     ) -> str:
         if text_math_context is not None:
             word = text_math_context["word"]
-            first_number = self._format_number(
-                text_math_context["first_number"]
-            )
+            first_number = self._format_number(text_math_context["first_number"])
             letter_count = text_math_context["letter_count"]
-            possible_result = self._format_number(
-                text_math_context["possible_result"]
-            )
+            possible_result = self._format_number(text_math_context["possible_result"])
 
             if user_language == "pt":
                 return (
@@ -178,8 +220,8 @@ Generate only the final response.
                     "ou divisão."
                 ),
                 "invalid_math": (
-                    "Não consegui identificar uma operação matemática válida. "
-                    "Tente usar dois números, como 2 + 4."
+                    "Não consegui identificar uma operação matemática "
+                    "válida. Tente usar dois números, como 2 + 4."
                 ),
                 "missing_context": (
                     "Preciso de um resultado anterior para continuar. "
@@ -189,7 +231,10 @@ Generate only the final response.
 
             return responses.get(
                 intent,
-                "Não consegui entender totalmente, mas posso ajudar com matemática básica.",
+                (
+                    "Não consegui entender totalmente, mas posso ajudar "
+                    "com matemática básica."
+                ),
             )
 
         responses = {
