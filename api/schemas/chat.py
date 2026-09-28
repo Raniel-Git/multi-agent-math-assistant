@@ -1,4 +1,5 @@
 from typing import Any
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -14,6 +15,10 @@ class ChatRequest(BaseModel):
         min_length=1,
         description="Message submitted to the chatbot.",
         examples=["What is 5 + 5?"],
+    )
+    conversation_id: UUID = Field(
+        description="Unique identifier for the conversation session.",
+        examples=["550e8400-e29b-41d4-a716-446655440000"],
     )
 
 

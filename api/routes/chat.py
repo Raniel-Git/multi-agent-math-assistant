@@ -1,13 +1,11 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, status
 
 from api.controllers.chat_controller import ChatController
-from api.dependencies.chatbot import get_chatbot_service
-from api.schemas.chat import (
-    ChatRequest,
-    ChatResponse,
-    ClearMemoryResponse,
-)
-from services.chatbot_service import ChatbotService
+from api.dependencies.chatbot import get_chatbot_session_manager
+from api.schemas.chat import ChatRequest, ChatResponse, ClearMemoryResponse
+from services.chatbot_session_manager import ChatbotSessionManager
 
 router = APIRouter(
     prefix="/chat",
@@ -16,18 +14,20 @@ router = APIRouter(
 
 
 def get_chat_controller(
-    chatbot_service: ChatbotService = Depends(get_chatbot_service),
+    session_manager: ChatbotSessionManager = Depends(
+        dependency=get_chatbot_session_manager,
+    ),
 ) -> ChatController:
-    """Create the chat controller with its required service.
+    """Create the chat controller with its required session manager.
 
     Args:
-        chatbot_service: Injected chatbot service.
+        session_manager: Injected chatbot session manager.
 
     Returns:
         Configured chat controller.
     """
     return ChatController(
-        chatbot_service=chatbot_service,
+        session_manager=session_manager,
     )
 
 
@@ -50,7 +50,10 @@ def process_message(
     status_code=status.HTTP_200_OK,
 )
 def clear_memory(
+    conversation_id: UUID,
     controller: ChatController = Depends(get_chat_controller),
 ) -> ClearMemoryResponse:
-    """Clear the current chatbot memory."""
-    return controller.clear_memory()
+    """Clear the memory for a specific conversation."""
+    return controller.clear_memory(
+        conversation_id=str(conversation_id),
+    )

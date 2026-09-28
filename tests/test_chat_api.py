@@ -4,9 +4,12 @@ from unittest.mock import Mock
 import pytest
 from fastapi.testclient import TestClient
 
-from api.dependencies.chatbot import get_chatbot_service
+from api.dependencies.chatbot import get_chatbot_session_manager
 from main import app
 from services.chatbot_service import ChatbotService
+from services.chatbot_session_manager import ChatbotSessionManager
+
+CONVERSATION_ID = "550e8400-e29b-41d4-a716-446655440000"
 
 
 @pytest.fixture
@@ -30,12 +33,23 @@ def chatbot_service() -> Mock:
 
 
 @pytest.fixture
-def client(
+def session_manager(
     chatbot_service: Mock,
+) -> Mock:
+    manager = Mock(spec=ChatbotSessionManager)
+    manager.get_service.return_value = chatbot_service
+
+    return manager
+
+
+@pytest.fixture
+def client(
+    session_manager: Mock,
 ) -> Generator[TestClient, None, None]:
-    app.dependency_overrides[get_chatbot_service] = (
-        lambda: chatbot_service
-    )
+    def override_session_manager() -> Mock:
+        return session_manager
+
+    app.dependency_overrides[get_chatbot_session_manager] = override_session_manager
 
     with TestClient(app) as test_client:
         yield test_client
@@ -57,11 +71,13 @@ def test_health_check_returns_healthy_status(
 def test_process_message_returns_chatbot_response(
     client: TestClient,
     chatbot_service: Mock,
+    session_manager: Mock,
 ) -> None:
     response = client.post(
         "/api/v1/chat/messages",
         json={
             "message": "5 + 5",
+            "conversation_id": CONVERSATION_ID,
         },
     )
 
@@ -85,6 +101,9 @@ def test_process_message_returns_chatbot_response(
         },
     }
 
+    session_manager.get_service.assert_called_once_with(
+        conversation_id=CONVERSATION_ID,
+    )
     chatbot_service.process_message.assert_called_once_with(
         message="5 + 5",
     )
@@ -95,7 +114,9 @@ def test_process_message_rejects_missing_message(
 ) -> None:
     response = client.post(
         "/api/v1/chat/messages",
-        json={},
+        json={
+            "conversation_id": CONVERSATION_ID,
+        },
     )
 
     assert response.status_code == 422
@@ -108,6 +129,34 @@ def test_process_message_rejects_empty_message(
         "/api/v1/chat/messages",
         json={
             "message": "",
+            "conversation_id": CONVERSATION_ID,
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_process_message_rejects_missing_conversation_id(
+    client: TestClient,
+) -> None:
+    response = client.post(
+        "/api/v1/chat/messages",
+        json={
+            "message": "5 + 5",
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_process_message_rejects_invalid_conversation_id(
+    client: TestClient,
+) -> None:
+    response = client.post(
+        "/api/v1/chat/messages",
+        json={
+            "message": "5 + 5",
+            "conversation_id": "invalid-id",
         },
     )
 
@@ -116,10 +165,13 @@ def test_process_message_rejects_empty_message(
 
 def test_clear_memory_returns_success_response(
     client: TestClient,
-    chatbot_service: Mock,
+    session_manager: Mock,
 ) -> None:
     response = client.delete(
         "/api/v1/chat/memory",
+        params={
+            "conversation_id": CONVERSATION_ID,
+        },
     )
 
     assert response.status_code == 200
@@ -128,7 +180,33 @@ def test_clear_memory_returns_success_response(
         "message": "Chatbot memory cleared successfully.",
     }
 
-    chatbot_service.clear_memory.assert_called_once_with()
+    session_manager.clear_session.assert_called_once_with(
+        conversation_id=CONVERSATION_ID,
+    )
+
+
+def test_clear_memory_rejects_missing_conversation_id(
+    client: TestClient,
+) -> None:
+    response = client.delete(
+        "/api/v1/chat/memory",
+    )
+
+    assert response.status_code == 422
+
+
+def test_clear_memory_rejects_invalid_conversation_id(
+    client: TestClient,
+) -> None:
+    response = client.delete(
+        "/api/v1/chat/memory",
+        params={
+            "conversation_id": "invalid-id",
+        },
+    )
+
+    assert response.status_code == 422
+
 
 def test_cors_allows_configured_origin(
     client: TestClient,
@@ -142,10 +220,7 @@ def test_cors_allows_configured_origin(
     )
 
     assert response.status_code == 200
-    assert (
-        response.headers["access-control-allow-origin"]
-        == "http://localhost:3000"
-    )
+    assert response.headers["access-control-allow-origin"] == "http://localhost:3000"
 
 
 def test_cors_does_not_allow_unconfigured_origin(
