@@ -4,32 +4,32 @@ from api.schemas.chat import (
     ChatResponseData,
     ClearMemoryResponse,
 )
-from services.chatbot_service import ChatbotService
+from services.chatbot_session_manager import ChatbotSessionManager
 
 
 class ChatController:
     """Coordinates chatbot API operations.
 
     Attributes:
-        chatbot_service: Service responsible for chatbot operations.
+        session_manager: Manager responsible for isolated chatbot sessions.
     """
 
     def __init__(
         self,
-        chatbot_service: ChatbotService,
+        session_manager: ChatbotSessionManager,
     ) -> None:
         """Initialize the chat controller.
 
         Args:
-            chatbot_service: Service responsible for chatbot operations.
+            session_manager: Manager responsible for chatbot sessions.
         """
-        self.chatbot_service = chatbot_service
+        self.session_manager = session_manager
 
     def process_message(
         self,
         request: ChatRequest,
     ) -> ChatResponse:
-        """Process a chatbot message.
+        """Process a chatbot message in an isolated conversation session.
 
         Args:
             request: Validated chatbot request.
@@ -37,7 +37,11 @@ class ChatController:
         Returns:
             Structured chatbot response.
         """
-        response = self.chatbot_service.process_message(
+        chatbot_service = self.session_manager.get_service(
+            conversation_id=str(request.conversation_id),
+        )
+
+        response = chatbot_service.process_message(
             message=request.message,
         )
 
@@ -46,20 +50,26 @@ class ChatController:
             message="Message processed successfully.",
             data=ChatResponseData(
                 response=response,
-                messages=self.chatbot_service.get_messages(),
-                last_result=self.chatbot_service.get_last_result(),
+                messages=chatbot_service.get_messages(),
+                last_result=chatbot_service.get_last_result(),
             ),
         )
 
     def clear_memory(
         self,
+        conversation_id: str,
     ) -> ClearMemoryResponse:
-        """Clear the current chatbot conversation memory.
+        """Clear memory for a specific conversation session.
+
+        Args:
+            conversation_id: Unique conversation identifier.
 
         Returns:
-            Confirmation that the memory was cleared.
+            Confirmation that the conversation memory was cleared.
         """
-        self.chatbot_service.clear_memory()
+        self.session_manager.clear_session(
+            conversation_id=conversation_id,
+        )
 
         return ClearMemoryResponse(
             success=True,

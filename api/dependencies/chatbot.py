@@ -2,17 +2,17 @@ from functools import lru_cache
 
 from config.settings import Settings
 from factories.chatbot_factory import ChatbotFactory
-from services.chatbot_service import ChatbotService
+from services.chatbot_session_manager import ChatbotSessionManager
 
 
 @lru_cache
-def get_chatbot_service() -> ChatbotService:
-    """Return the shared chatbot service instance.
+def get_chatbot_session_manager() -> ChatbotSessionManager:
+    """Return the shared chatbot session manager.
 
     Returns:
-        Configured chatbot service.
+        Configured chatbot session manager.
     """
     settings = Settings.from_environment()
     factory = ChatbotFactory(settings=settings)
 
-    return factory.create_service()
+    return ChatbotSessionManager(factory=factory)
